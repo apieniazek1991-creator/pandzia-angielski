@@ -1,0 +1,1427 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Angielski dla Malucha - Wesoła Nauka</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Tone.js dla przyjemnych efektów dźwiękowych -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <!-- Czcionka przyjazna dzieciom (zaokrąglona) -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* Niestandardowe style dla gry edukacyjnej */
+        body {
+            font-family: 'Fredoka', sans-serif;
+            background: linear-gradient(135deg, #e0f2fe 0%, #fef3c7 50%, #fce7f3 100%);
+            min-height: 100vh;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            overflow-x: hidden;
+        }
+
+        /* Animacje przycisków 3D (efekt wciskania) */
+        .btn-3d {
+            transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 6px 0 rgba(0, 0, 0, 0.15), 0 10px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-3d:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 rgba(0, 0, 0, 0.15), 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Animacja podskakiwania dla ikon i nagród */
+        @keyframes bounce-gentle {
+            0%, 100% { transform: translateY(0) scale(1); }
+            50% { transform: translateY(-8px) scale(1.05); }
+        }
+
+        .animate-bounce-gentle {
+            animation: bounce-gentle 2.5s infinite ease-in-out;
+        }
+
+        /* Animacja potrząsania przy błędnej odpowiedzi (delikatna, nie zniechęcająca) */
+        @keyframes wobble {
+            0%, 100% { transform: rotate(0deg); }
+            25% { transform: rotate(-6deg); }
+            75% { transform: rotate(6deg); }
+        }
+
+        .animate-wobble {
+            animation: wobble 0.4s ease-in-out;
+        }
+
+        /* Animacja sukcesu (powiększenie i obrót) */
+        @keyframes pop-success {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2) rotate(5deg); }
+            100% { transform: scale(1) rotate(0deg); }
+        }
+
+        .animate-pop {
+            animation: pop-success 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        /* Pływające chmurki w tle */
+        .cloud {
+            position: fixed;
+            background: rgba(255, 255, 255, 0.6);
+            border-radius: 50px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Karta koloru - specjalny wygląd */
+        .color-swatch {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            border: 5px solid white;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+            margin: 0 auto;
+        }
+
+        @media (min-width: 640px) {
+            .color-swatch {
+                width: 100px;
+                height: 100px;
+            }
+        }
+    </style>
+</head>
+<body class="flex flex-col items-center justify-between p-3 sm:p-6 relative">
+
+    <!-- Dekoracyjne chmurki w tle -->
+    <div class="cloud w-32 h-12 top-10 left-5 opacity-70"></div>
+    <div class="cloud w-48 h-16 top-24 right-8 opacity-60"></div>
+    <div class="cloud w-40 h-14 bottom-16 left-12 opacity-70"></div>
+
+    <!-- GÓRNY PASEK NAWIGACJI I NAGRÓD -->
+    <header class="w-full max-w-4xl flex items-center justify-between bg-white/90 backdrop-blur-md rounded-3xl p-3 sm:p-4 shadow-lg border-4 border-white z-10 mb-4">
+        <!-- Przycisk powrotu do menu głównego -->
+        <button id="home-btn" onclick="goHome()" class="btn-3d bg-amber-400 hover:bg-amber-500 text-amber-950 font-bold py-2 px-4 sm:py-3 sm:px-5 rounded-2xl flex items-center gap-2 text-lg sm:text-xl hidden">
+            <span>🏠</span>
+            <span class="hidden sm:inline">Menu</span>
+        </button>
+
+        <!-- Tytuł gry w menu głównym -->
+        <div id="header-title" class="flex items-center gap-2 sm:gap-3">
+            <span class="text-3xl sm:text-4xl animate-bounce-gentle">🦁</span>
+            <h1 class="text-xl sm:text-3xl font-bold text-indigo-600 tracking-wide">Wesoły Angielski</h1>
+        </div>
+
+        <!-- Licznik zdobytych gwiazdek i kontrola dźwięku -->
+        <div class="flex items-center gap-2 sm:gap-3">
+            <!-- Gwiazdki -->
+            <div class="bg-yellow-100 border-2 border-yellow-300 rounded-2xl px-3 py-1.5 sm:px-4 sm:py-2 flex items-center gap-1.5 shadow-inner">
+                <span class="text-2xl sm:text-3xl">⭐</span>
+                <span id="star-count" class="text-xl sm:text-2xl font-bold text-yellow-700">0</span>
+            </div>
+
+            <!-- Przycisk trybu lektora (Tylko EN vs EN + PL) -->
+            <button id="bilingual-toggle" onclick="toggleBilingual()" class="btn-3d bg-indigo-500 hover:bg-indigo-600 text-white px-3 py-2 sm:px-4 sm:py-2.5 rounded-2xl font-bold text-sm sm:text-base flex items-center gap-1" title="Zmień tryb tłumaczenia po kliknięciu">
+                <span>🇬🇧➔🇵🇱</span>
+            </button>
+
+            <!-- Przycisk powtórzenia dźwięku (aktywny w grze) -->
+            <button id="sound-toggle" onclick="toggleAudio()" class="btn-3d bg-sky-400 hover:bg-sky-500 text-white p-2.5 sm:p-3 rounded-2xl text-xl sm:text-2xl" title="Włącz/Wyłącz dźwięk">
+                🔊
+            </button>
+        </div>
+    </header>
+
+    <!-- GŁÓWNY OBSZAR GRY -->
+    <main id="app-container" class="w-full max-w-4xl flex-grow flex flex-col items-center justify-center z-10 my-2">
+        <!-- Zawartość wstrzykiwana dynamicznie przez JavaScript -->
+    </main>
+
+    <!-- MODAL NAGRODY (Konfetti i gratulacje po zdobyciu serii gwiazdek) -->
+    <div id="reward-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full text-center border-8 border-yellow-300 shadow-2xl transform transition-all scale-100">
+            <div class="text-7xl sm:text-8xl mb-4 animate-bounce">🏆</div>
+            <h2 class="text-3xl sm:text-4xl font-bold text-indigo-600 mb-2">Super! Brawo!</h2>
+            <p class="text-lg sm:text-xl text-gray-600 mb-6">Świetnie znasz angielskie słówka! Oto Twoja nagroda!</p>
+            <div class="flex justify-center gap-2 text-4xl mb-6">
+                <span>⭐</span><span>⭐</span><span>⭐</span>
+            </div>
+            <button onclick="closeRewardModal()" class="btn-3d w-full bg-green-500 hover:bg-green-600 text-white font-bold text-2xl py-4 rounded-2xl">
+                Gram dalej! 🚀
+            </button>
+        </div>
+    </div>
+
+    <!-- STOPKA -->
+    <footer class="w-full text-center text-gray-500 text-xs sm:text-sm mt-4 z-10">
+        Dotknij obrazka, aby usłyszeć słowo po angielsku 🎧
+    </footer>
+
+    <!-- SKRYPT LOGIKI GRY -->
+    <script>
+        /**
+         * BAZA WIEDZY (Słownictwo dostosowane do 4-latka)
+         * Każda kategoria ma unikalny kolor, ikonę, polską nazwę oraz listę elementów.
+         */
+        const CATEGORIES = [
+            {
+                id: 'colors',
+                namePL: 'Kolory',
+                nameEN: 'Colors',
+                icon: '🎨',
+                bgColor: 'bg-pink-400',
+                borderColor: 'border-pink-600',
+                textColor: 'text-pink-950',
+                items: [
+                    { en: 'Red', pl: 'Czerwony', colorHex: '#EF4444', emoji: '🍎' },
+                    { en: 'Blue', pl: 'Niebieski', colorHex: '#3B82F6', emoji: '🐳' },
+                    { en: 'Yellow', pl: 'Żółty', colorHex: '#EAB308', emoji: '☀️' },
+                    { en: 'Green', pl: 'Zielony', colorHex: '#22C55E', emoji: '🐸' },
+                    { en: 'Orange', pl: 'Pomarańczowy', colorHex: '#F97316', emoji: '🍊' },
+                    { en: 'Purple', pl: 'Fioletowy', colorHex: '#A855F7', emoji: '🍇' },
+                    { en: 'Pink', pl: 'Różowy', colorHex: '#EC4899', emoji: '🦩' },
+                    { en: 'Brown', pl: 'Brązowy', colorHex: '#854D0E', emoji: '🐻' },
+                    { en: 'Black', pl: 'Czarny', colorHex: '#1F2937', emoji: '🐈‍⬛' },
+                    { en: 'White', pl: 'Biały', colorHex: '#F9FAFB', emoji: '🐇' },
+                    { en: 'Gray', pl: 'Szary', colorHex: '#9CA3AF', emoji: '🐘' },
+                    { en: 'Light blue', pl: 'Jasnoniebieski', colorHex: '#38BDF8', emoji: '🦋' }
+                ]
+            },
+            {
+                id: 'farm_animals',
+                namePL: 'Farma',
+                nameEN: 'Farm Animals',
+                icon: '🚜',
+                bgColor: 'bg-amber-400',
+                borderColor: 'border-amber-600',
+                textColor: 'text-amber-950',
+                items: [
+                    { en: 'Dog', pl: 'Pies', emoji: '🐶' },
+                    { en: 'Cat', pl: 'Kot', emoji: '🐱' },
+                    { en: 'Pig', pl: 'Świnka', emoji: '🐷' },
+                    { en: 'Cow', pl: 'Krowa', emoji: '🐮' },
+                    { en: 'Duck', pl: 'Kaczka', emoji: '🦆' },
+                    { en: 'Horse', pl: 'Koń', emoji: '🐴' },
+                    { en: 'Sheep', pl: 'Owca', emoji: '🐑' },
+                    { en: 'Chicken', pl: 'Kura', emoji: '🐔' },
+                    { en: 'Goat', pl: 'Koza', emoji: '🐐' },
+                    { en: 'Donkey', pl: 'Osiołek', emoji: '🫏' },
+                    { en: 'Rabbit', pl: 'Królik', emoji: '🐇' },
+                    { en: 'Goose', pl: 'Gęś', emoji: '🦢' }
+                ]
+            },
+            {
+                id: 'safari_animals',
+                namePL: 'Safari',
+                nameEN: 'Safari Animals',
+                icon: '🦁',
+                bgColor: 'bg-orange-400',
+                borderColor: 'border-orange-600',
+                textColor: 'text-orange-950',
+                items: [
+                    { en: 'Lion', pl: 'Lew', emoji: '🦁' },
+                    { en: 'Elephant', pl: 'Słoń', emoji: '🐘' },
+                    { en: 'Monkey', pl: 'Małpka', emoji: '🐵' },
+                    { en: 'Giraffe', pl: 'Żyrafa', emoji: '🦒' },
+                    { en: 'Zebra', pl: 'Zebra', emoji: '🦓' },
+                    { en: 'Tiger', pl: 'Tygrys', emoji: '🐯' },
+                    { en: 'Hippo', pl: 'Hipopotam', emoji: '🦛' },
+                    { en: 'Crocodile', pl: 'Krokodyl', emoji: '🐊' },
+                    { en: 'Rhino', pl: 'Nosorożec', emoji: '🦏' },
+                    { en: 'Leopard', pl: 'Lampart', emoji: '🐆' },
+                    { en: 'Camel', pl: 'Wielbłąd', emoji: '🐪' },
+                    { en: 'Ostrich', pl: 'Struś', emoji: '🪶' }
+                ]
+            },
+            {
+                id: 'fruits',
+                namePL: 'Owoce',
+                nameEN: 'Fruits',
+                icon: '🍓',
+                bgColor: 'bg-red-400',
+                borderColor: 'border-red-600',
+                textColor: 'text-red-950',
+                items: [
+                    { en: 'Apple', pl: 'Jabłko', emoji: '🍎' },
+                    { en: 'Banana', pl: 'Banan', emoji: '🍌' },
+                    { en: 'Strawberry', pl: 'Truskawka', emoji: '🍓' },
+                    { en: 'Orange', pl: 'Pomarańcza', emoji: '🍊' },
+                    { en: 'Watermelon', pl: 'Arbuz', emoji: '🍉' },
+                    { en: 'Pear', pl: 'Gruszka', emoji: '🍐' },
+                    { en: 'Grapes', pl: 'Winogrona', emoji: '🍇' },
+                    { en: 'Cherry', pl: 'Wiśnia', emoji: '🍒' },
+                    { en: 'Pineapple', pl: 'Ananas', emoji: '🍍' },
+                    { en: 'Lemon', pl: 'Cytryna', emoji: '🍋' },
+                    { en: 'Peach', pl: 'Brzoskwinia', emoji: '🍑' },
+                    { en: 'Kiwi', pl: 'Kiwi', emoji: '🥝' },
+                    { en: 'Plum', pl: 'Śliwka', emoji: '🫐' },
+                    { en: 'Coconut', pl: 'Kokos', emoji: '🥥' }
+                ]
+            },
+            {
+                id: 'vegetables',
+                namePL: 'Warzywa',
+                nameEN: 'Vegetables',
+                icon: '🥕',
+                bgColor: 'bg-emerald-400',
+                borderColor: 'border-emerald-600',
+                textColor: 'text-emerald-950',
+                items: [
+                    { en: 'Carrot', pl: 'Marchewka', emoji: '🥕' },
+                    { en: 'Tomato', pl: 'Pomidor', emoji: '🍅' },
+                    { en: 'Cucumber', pl: 'Ogórek', emoji: '🥒' },
+                    { en: 'Potato', pl: 'Ziemniak', emoji: '🥔' },
+                    { en: 'Corn', pl: 'Kukurydza', emoji: '🌽' },
+                    { en: 'Broccoli', pl: 'Brokuł', emoji: '🥦' },
+                    { en: 'Onion', pl: 'Cebula', emoji: '🧅' },
+                    { en: 'Pepper', pl: 'Papryka', emoji: '🫑' },
+                    { en: 'Garlic', pl: 'Czosnek', emoji: '🧄' },
+                    { en: 'Eggplant', pl: 'Bakłażan', emoji: '🍆' },
+                    { en: 'Mushroom', pl: 'Grzyb', emoji: '🍄' },
+                    { en: 'Peas', pl: 'Groszek', emoji: '🫛' },
+                    { en: 'Pumpkin', pl: 'Dynia', emoji: '🎃' },
+                    { en: 'Lettuce', pl: 'Sałata', emoji: '🥬' }
+                ]
+            },
+            {
+                id: 'numbers',
+                namePL: 'Liczby',
+                nameEN: 'Numbers',
+                icon: '🔢',
+                bgColor: 'bg-sky-400',
+                borderColor: 'border-sky-600',
+                textColor: 'text-sky-950',
+                items: [
+                    { en: 'One', pl: 'Jeden', emoji: '1️⃣', countEmoji: '🎈' },
+                    { en: 'Two', pl: 'Dwa', emoji: '2️⃣', countEmoji: '🎈🎈' },
+                    { en: 'Three', pl: 'Trzy', emoji: '3️⃣', countEmoji: '🎈🎈🎈' },
+                    { en: 'Four', pl: 'Cztery', emoji: '4️⃣', countEmoji: '🎈🎈🎈🎈' },
+                    { en: 'Five', pl: 'Pięć', emoji: '5️⃣', countEmoji: '🎈🎈🎈🎈🎈' },
+                    { en: 'Six', pl: 'Sześć', emoji: '6️⃣', countEmoji: '🌟🌟🌟🌟🌟🌟' },
+                    { en: 'Seven', pl: 'Siedem', emoji: '7️⃣', countEmoji: '🌟🌟🌟🌟🌟🌟🌟' },
+                    { en: 'Eight', pl: 'Osiem', emoji: '8️⃣', countEmoji: '🌟🌟🌟🌟🌟🌟🌟🌟' },
+                    { en: 'Nine', pl: 'Dziewięć', emoji: '9️⃣', countEmoji: '🍎🍎🍎🍎🍎🍎🍎🍎🍎' },
+                    { en: 'Ten', pl: 'Dziesięć', emoji: '🔟', countEmoji: '🍎🍎🍎🍎🍎🍎🍎🍎🍎🍎' }
+                ]
+            },
+            {
+                id: 'clothes',
+                namePL: 'Ubrania',
+                nameEN: 'Clothes',
+                icon: '👕',
+                bgColor: 'bg-teal-400',
+                borderColor: 'border-teal-600',
+                textColor: 'text-teal-950',
+                items: [
+                    { en: 'T-shirt', pl: 'Koszulka', emoji: '👕' },
+                    { en: 'Trousers', pl: 'Spodnie', emoji: '👖' },
+                    { en: 'Dress', pl: 'Sukienka', emoji: '👗' },
+                    { en: 'Shoes', pl: 'Buty', emoji: '👟' },
+                    { en: 'Hat', pl: 'Czapka', emoji: '🧢' },
+                    { en: 'Socks', pl: 'Skarpetki', emoji: '🧦' },
+                    { en: 'Jacket', pl: 'Kurtka', emoji: '🧥' },
+                    { en: 'Gloves', pl: 'Rękawiczki', emoji: '🧤' }
+                ]
+            },
+            {
+                id: 'seasons',
+                namePL: 'Pory Roku',
+                nameEN: 'Seasons',
+                icon: '🌦️',
+                bgColor: 'bg-purple-400',
+                borderColor: 'border-purple-600',
+                textColor: 'text-purple-950',
+                items: [
+                    { en: 'Spring', pl: 'Wiosna', emoji: '🌷', desc: 'Kwiatki i motylki 🦋' },
+                    { en: 'Summer', pl: 'Lato', emoji: '☀️', desc: 'Słońce i plaża 🏖️' },
+                    { en: 'Autumn', pl: 'Jesień', emoji: '🍂', desc: 'Kolorowe liście 🍄' },
+                    { en: 'Winter', pl: 'Zima', emoji: '⛄', desc: 'Śnieg i bałwanek ❄️' }
+                ]
+            },
+            {
+                id: 'christmas',
+                namePL: 'Boże Narodzenie',
+                nameEN: 'Christmas',
+                icon: '🎄',
+                bgColor: 'bg-rose-400',
+                borderColor: 'border-rose-600',
+                textColor: 'text-rose-950',
+                items: [
+                    { en: 'Santa', pl: 'Święty Mikołaj', emoji: '🎅' },
+                    { en: 'Christmas tree', pl: 'Choinka', emoji: '🎄' },
+                    { en: 'Gift', pl: 'Prezent', emoji: '🎁' },
+                    { en: 'Snowman', pl: 'Bałwanek', emoji: '⛄' },
+                    { en: 'Reindeer', pl: 'Renifer', emoji: '🦌' },
+                    { en: 'Star', pl: 'Gwiazdka', emoji: '⭐' },
+                    { en: 'Bell', pl: 'Dzwoneczek', emoji: '🔔' },
+                    { en: 'Angel', pl: 'Aniołek', emoji: '👼' }
+                ]
+            },
+            {
+                id: 'emotions',
+                namePL: 'Emocje',
+                nameEN: 'Emotions',
+                icon: '😊',
+                bgColor: 'bg-yellow-400',
+                borderColor: 'border-yellow-600',
+                textColor: 'text-yellow-950',
+                items: [
+                    { en: 'Happy', pl: 'Wesoły', emoji: '😄' },
+                    { en: 'Sad', pl: 'Smutny', emoji: '😢' },
+                    { en: 'Angry', pl: 'Zły', emoji: '😠' },
+                    { en: 'Scared', pl: 'Wystraszony', emoji: '😨' },
+                    { en: 'Surprised', pl: 'Zdziwiony', emoji: '😲' },
+                    { en: 'Sleepy', pl: 'Śpiący', emoji: '😴' },
+                    { en: 'Tired', pl: 'Zmęczony', emoji: '🥱' },
+                    { en: 'Silly', pl: 'Wygłupiający się', emoji: '🤪' }
+                ]
+            },
+            {
+                id: 'greetings',
+                namePL: 'Zwroty',
+                nameEN: 'Greetings',
+                icon: '👋',
+                bgColor: 'bg-cyan-400',
+                borderColor: 'border-cyan-600',
+                textColor: 'text-cyan-950',
+                items: [
+                    { en: 'Hello', pl: 'Cześć', emoji: '👋' },
+                    { en: 'Good morning', pl: 'Dzień dobry', emoji: '🌅' },
+                    { en: 'Good night', pl: 'Dobranoc', emoji: '🌙' },
+                    { en: 'Bye-bye', pl: 'Pa, pa', emoji: '🙋' },
+                    { en: 'Thank you', pl: 'Dziękuję', emoji: '🤗' },
+                    { en: 'Please', pl: 'Proszę', emoji: '🙏' },
+                    { en: 'Sorry', pl: 'Przepraszam', emoji: '🥺' },
+                    { en: 'You are welcome', pl: 'Nie ma za co', emoji: '😊' }
+                ]
+            },
+            {
+                id: 'weather',
+                namePL: 'Pogoda',
+                nameEN: 'Weather',
+                icon: '☀️',
+                bgColor: 'bg-blue-400',
+                borderColor: 'border-blue-600',
+                textColor: 'text-blue-950',
+                items: [
+                    { en: 'Sun', pl: 'Słońce', emoji: '☀️' },
+                    { en: 'Rain', pl: 'Deszcz', emoji: '🌧️' },
+                    { en: 'Snow', pl: 'Śnieg', emoji: '❄️' },
+                    { en: 'Wind', pl: 'Wiatr', emoji: '💨' },
+                    { en: 'Cloud', pl: 'Chmura', emoji: '☁️' },
+                    { en: 'Rainbow', pl: 'Tęcza', emoji: '🌈' },
+                    { en: 'Storm', pl: 'Burza', emoji: '⛈️' },
+                    { en: 'Moon', pl: 'Księżyc', emoji: '🌙' }
+                ]
+            },
+            {
+                id: 'school_supplies',
+                namePL: 'Przybory',
+                nameEN: 'School Supplies',
+                icon: '🖍️',
+                bgColor: 'bg-lime-400',
+                borderColor: 'border-lime-600',
+                textColor: 'text-lime-950',
+                items: [
+                    { en: 'Pencil', pl: 'Ołówek', emoji: '✏️' },
+                    { en: 'Crayons', pl: 'Kredki', emoji: '🖍️' },
+                    { en: 'Paint', pl: 'Farby', emoji: '🎨' },
+                    { en: 'Scissors', pl: 'Nożyczki', emoji: '✂️' },
+                    { en: 'Book', pl: 'Książka', emoji: '📖' },
+                    { en: 'Backpack', pl: 'Plecak', emoji: '🎒' },
+                    { en: 'Glue', pl: 'Klej', emoji: '🧴' },
+                    { en: 'Ruler', pl: 'Linijka', emoji: '📏' }
+                ]
+            },
+            {
+                id: 'shapes',
+                namePL: 'Figury',
+                nameEN: 'Shapes',
+                icon: '🔺',
+                bgColor: 'bg-violet-400',
+                borderColor: 'border-violet-600',
+                textColor: 'text-violet-950',
+                items: [
+                    { en: 'Circle', pl: 'Koło', emoji: '🔴' },
+                    { en: 'Square', pl: 'Kwadrat', emoji: '🟦' },
+                    { en: 'Triangle', pl: 'Trójkąt', emoji: '🔺' },
+                    { en: 'Star', pl: 'Gwiazda', emoji: '⭐' },
+                    { en: 'Heart', pl: 'Serce', emoji: '❤️' },
+                    { en: 'Diamond', pl: 'Romb', emoji: '🔷' },
+                    { en: 'Oval', pl: 'Owal', emoji: '🥚' },
+                    { en: 'Rectangle', pl: 'Prostokąt', emoji: '▬' }
+                ]
+            },
+            {
+                id: 'color_rhyme',
+                namePL: 'Rymowanka',
+                nameEN: 'Color Rhyme',
+                icon: '🎶',
+                bgColor: 'bg-fuchsia-400',
+                borderColor: 'border-fuchsia-600',
+                textColor: 'text-fuchsia-950',
+                items: [
+                    {
+                        en: 'Red, red, red, touch your head. Blue, blue, blue, touch your shoe. Green, green, green, touch your knee. Yellow, yellow, hello, hello!',
+                        lines: [
+                            'Red, red, red, touch your head.',
+                            'Blue, blue, blue, touch your shoe.',
+                            'Green, green, green, touch your knee.',
+                            'Yellow, yellow, hello, hello!'
+                        ],
+                        colorHex: '#A855F7',
+                        emoji: '🎨'
+                    }
+                ]
+            }
+        ];
+
+        // STAN APLIKACJI
+        let state = {
+            currentScreen: 'menu', // 'menu', 'learn', 'quiz', 'match_colors', 'match_numbers'
+            selectedCategory: null,
+            stars: 0,
+            soundEnabled: true,
+            bilingualMode: true, // Domyślnie włączone czytanie EN + PL w trybie nauki
+            quizTarget: null,
+            quizOptions: [],
+            quizStreak: 0,
+            isAnswering: false,
+            matchSelectedColor: null,
+            matchMatchedIds: [],
+            matchSelectedNumber: null,
+            matchMatchedNumbers: []
+        };
+
+        // INICJALIZACJA DŹWIĘKU (Tone.js)
+        let synth = null;
+        function initAudio() {
+            if (!synth && typeof Tone !== 'undefined') {
+                synth = new Tone.PolySynth(Tone.Synth).toDestination();
+                synth.volume.value = -6;
+            }
+        }
+
+        // Efekty dźwiękowe (fanfary, kliknięcia)
+        function playSoundEffect(type) {
+            if (!state.soundEnabled) return;
+            try {
+                initAudio();
+                if (Tone.context.state !== 'running') {
+                    Tone.start();
+                }
+
+                const now = Tone.now();
+                if (type === 'click') {
+                    synth.triggerAttackRelease("C5", "16n", now);
+                } else if (type === 'success') {
+                    // Wesoły akord C-dur w górę
+                    synth.triggerAttackRelease("C5", "16n", now);
+                    synth.triggerAttackRelease("E5", "16n", now + 0.1);
+                    synth.triggerAttackRelease("G5", "16n", now + 0.2);
+                    synth.triggerAttackRelease("C6", "8n", now + 0.3);
+                } else if (type === 'tryAgain') {
+                    // Delikatny, przyjazny dźwięk zachęcający do kolejnej próby
+                    synth.triggerAttackRelease("E4", "8n", now);
+                    synth.triggerAttackRelease("C4", "8n", now + 0.15);
+                } else if (type === 'reward') {
+                    // Fanfary
+                    synth.triggerAttackRelease(["C5", "E5", "G5"], "8n", now);
+                    synth.triggerAttackRelease(["D5", "F5", "A5"], "8n", now + 0.2);
+                    synth.triggerAttackRelease(["E5", "G5", "B5"], "8n", now + 0.4);
+                    synth.triggerAttackRelease(["C5", "E5", "G5", "C6"], "2n", now + 0.6);
+                }
+            } catch (e) {
+                console.warn("Audio playback issue:", e);
+            }
+        }
+
+        /**
+         * SYNTEZATOR MOWY (Web Speech API)
+         * Czyta słówka po angielsku, a w razie potrzeby dodaje polskie tłumaczenie.
+         */
+        function pickKidFriendlyVoice(voices, langPrefix) {
+            const matching = voices.filter(v => v.lang.toLowerCase().startsWith(langPrefix.toLowerCase()));
+            if (!matching.length) return null;
+
+            const isPolish = langPrefix.toLowerCase().startsWith('pl');
+
+            // Dla języka polskiego preferuj najbardziej naturalne głosy (np. Zofia/Marek Natural, Google Polski)
+            // i unikaj mocno zniekształconych głosów robotycznych, jeśli dostępne są lepsze
+            const preferredNames = isPolish
+                ? [
+                    'natural', 'online (natural)', 'zofia', 'marek', 'google polski',
+                    'paulina', 'zosia', 'ewa', 'maja'
+                  ]
+                : [
+                    'natural', 'google us english', 'samantha', 'victoria', 'karen', 'moira',
+                    'tessa', 'fiona', 'zira', 'aria', 'jenny'
+                  ];
+
+            for (const keyword of preferredNames) {
+                const found = matching.find(v => v.name.toLowerCase().includes(keyword));
+                if (found) return found;
+            }
+
+            // Jeśli w systemie jest kilka głosów PL, wybierz ten z dopiskiem 'online' lub 'enhanced'
+            const enhanced = matching.find(v =>
+                v.name.toLowerCase().includes('online') ||
+                v.name.toLowerCase().includes('enhanced') ||
+                v.name.toLowerCase().includes('premium')
+            );
+            if (enhanced) return enhanced;
+
+            return matching[0];
+        }
+
+        function speakEnglish(text, polishText = null) {
+            if (!state.soundEnabled) return;
+            
+            if ('speechSynthesis' in window) {
+                // Anuluj poprzednią wypowiedź, aby dźwięki nie nakładały się na siebie
+                window.speechSynthesis.cancel();
+
+                const voices = window.speechSynthesis.getVoices();
+
+                const utteranceEN = new SpeechSynthesisUtterance(text);
+                utteranceEN.lang = 'en-US';
+                utteranceEN.rate = 0.78; // Spokojne, wyraźne tempo idealne dla przedszkolaka
+                utteranceEN.pitch = 1.28; // Cieplejsza, bardziej dziecięca/przyjazna wysokość głosu
+
+                const englishVoice = pickKidFriendlyVoice(voices, 'en');
+                if (englishVoice) {
+                    utteranceEN.voice = englishVoice;
+                }
+
+                // Jeśli przekazano polskie tłumaczenie (tryb EN -> PL), odtwórz je zaraz po angielskim
+                if (polishText && state.bilingualMode) {
+                    utteranceEN.onend = () => {
+                        if (!state.soundEnabled) return;
+                        const utterancePL = new SpeechSynthesisUtterance(polishText);
+                        utterancePL.lang = 'pl-PL';
+                        // Bardziej naturalne tempo i łagodniejsza wysokość głosu brzmią znacznie bardziej po ludzku
+                        utterancePL.rate = 0.96;
+                        utterancePL.pitch = 1.04;
+
+                        const polishVoice = pickKidFriendlyVoice(voices, 'pl');
+                        if (polishVoice) {
+                            utterancePL.voice = polishVoice;
+                        }
+                        window.speechSynthesis.speak(utterancePL);
+                    };
+                }
+
+                window.speechSynthesis.speak(utteranceEN);
+            }
+        }
+
+        // Załaduj głosy syntezatora po inicjalizacji
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.onvoiceschanged = () => {
+                window.speechSynthesis.getVoices();
+            };
+        }
+
+        // Przełączanie trybu dwujęzycznego (EN -> PL vs tylko EN)
+        function toggleBilingual() {
+            state.bilingualMode = !state.bilingualMode;
+            const btn = document.getElementById('bilingual-toggle');
+            if (state.bilingualMode) {
+                btn.innerHTML = '<span>🇬🇧➔🇵🇱</span>';
+                btn.classList.remove('bg-gray-400', 'hover:bg-gray-500');
+                btn.classList.add('bg-indigo-500', 'hover:bg-indigo-600');
+            } else {
+                btn.innerHTML = '<span>🇬🇧 EN</span>';
+                btn.classList.remove('bg-indigo-500', 'hover:bg-indigo-600');
+                btn.classList.add('bg-gray-400', 'hover:bg-gray-500');
+            }
+            playSoundEffect('click');
+        }
+
+        // Przełączanie dźwięku
+        function toggleAudio() {
+            state.soundEnabled = !state.soundEnabled;
+            if (!state.soundEnabled && 'speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+            }
+            const btn = document.getElementById('sound-toggle');
+            btn.innerHTML = state.soundEnabled ? '🔊' : '🔇';
+            btn.classList.toggle('bg-sky-400', state.soundEnabled);
+            btn.classList.toggle('bg-gray-400', !state.soundEnabled);
+            if (state.soundEnabled) playSoundEffect('click');
+        }
+
+        // Aktualizacja licznika gwiazdek
+        function addStar() {
+            state.stars++;
+            state.quizStreak++;
+            const starEl = document.getElementById('star-count');
+            starEl.textContent = state.stars;
+            starEl.parentElement.classList.add('animate-pop');
+            setTimeout(() => starEl.parentElement.classList.remove('animate-pop'), 500);
+
+            // Co 5 poprawnych odpowiedzi otwórz modal z wielką nagrodą!
+            if (state.quizStreak > 0 && state.quizStreak % 5 === 0) {
+                setTimeout(() => {
+                    playSoundEffect('reward');
+                    document.getElementById('reward-modal').classList.remove('hidden');
+                }, 800);
+            }
+        }
+
+        function closeRewardModal() {
+            playSoundEffect('click');
+            document.getElementById('reward-modal').classList.add('hidden');
+            nextQuizQuestion();
+        }
+
+        // NAWIGACJA DO MENU GŁÓWNEGO
+        function goHome() {
+            playSoundEffect('click');
+            state.currentScreen = 'menu';
+            state.selectedCategory = null;
+            updateHeader();
+            render();
+        }
+
+        // WYBÓR KATEGORII
+        function selectCategory(categoryId) {
+            playSoundEffect('click');
+            state.selectedCategory = CATEGORIES.find(c => c.id === categoryId);
+            state.currentScreen = 'learn';
+            speakEnglish(state.selectedCategory.nameEN);
+            updateHeader();
+            render();
+        }
+
+        // PRZEŁĄCZANIE MIĘDZY NAUKĄ A ZABAWĄ (QUIZEM LUB DOPASOWYWANIEM)
+        function setMode(mode) {
+            playSoundEffect('click');
+            state.currentScreen = mode;
+            state.matchSelectedColor = null;
+            state.matchSelectedNumber = null;
+            if (mode === 'quiz') {
+                state.quizStreak = 0;
+                nextQuizQuestion();
+            } else if (mode === 'match_colors') {
+                initColorMatchGame();
+            } else if (mode === 'match_numbers') {
+                initNumberMatchGame();
+            } else {
+                render();
+            }
+        }
+
+        // Aktualizacja nagłówka w zależności od ekranu
+        function updateHeader() {
+            const homeBtn = document.getElementById('home-btn');
+            const headerTitle = document.getElementById('header-title');
+
+            if (state.currentScreen === 'menu') {
+                homeBtn.classList.add('hidden');
+                headerTitle.innerHTML = `
+                    <span class="text-3xl sm:text-4xl animate-bounce-gentle">🦁</span>
+                    <h1 class="text-xl sm:text-3xl font-bold text-indigo-600 tracking-wide">Wesoły Angielski</h1>
+                `;
+            } else {
+                homeBtn.classList.remove('hidden');
+                headerTitle.innerHTML = `
+                    <span class="text-3xl sm:text-4xl">${state.selectedCategory.icon}</span>
+                    <h1 class="text-xl sm:text-3xl font-bold text-indigo-600">${state.selectedCategory.namePL}</h1>
+                `;
+            }
+        }
+
+        /**
+         * RENDEROWANIE EKRANÓW
+         */
+        function render() {
+            const container = document.getElementById('app-container');
+            container.innerHTML = '';
+
+            if (state.currentScreen === 'menu') {
+                renderMenu(container);
+            } else if (state.currentScreen === 'learn') {
+                renderLearnMode(container);
+            } else if (state.currentScreen === 'quiz') {
+                renderQuizMode(container);
+            } else if (state.currentScreen === 'match_colors') {
+                renderColorMatchMode(container);
+            } else if (state.currentScreen === 'match_numbers') {
+                renderNumberMatchMode(container);
+            }
+        }
+
+        // 1. EKRAN MENU GŁÓWNEGO (Wybór kategorii)
+        function renderMenu(container) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'w-full flex flex-col items-center';
+
+            // Sekcja powitalna z asystentem Pandą
+            const pandaBox = document.createElement('div');
+            pandaBox.className = 'w-full max-w-2xl bg-white/95 border-4 border-indigo-200 rounded-3xl p-4 sm:p-5 mb-6 shadow-md flex flex-col sm:flex-row items-center gap-4 text-center sm:text-left relative';
+            pandaBox.innerHTML = `
+                <button onclick="pandaGreet()" class="btn-3d bg-emerald-100 hover:bg-emerald-200 border-4 border-emerald-300 w-24 h-24 sm:w-28 sm:h-28 rounded-full flex items-center justify-center text-6xl sm:text-7xl shrink-0 animate-bounce-gentle cursor-pointer" title="Kliknij Pandę, aby usłyszeć powitanie!">
+                    🐼
+                </button>
+                <div class="flex-grow">
+                    <div class="inline-block bg-emerald-500 text-white text-xs sm:text-sm font-bold px-3 py-0.5 rounded-full mb-1">
+                        Twój przyjaciel Panda 🎋
+                    </div>
+                    <h2 class="text-xl sm:text-2xl font-bold text-indigo-700 mb-1">
+                        Hello! Cześć! Jestem Panda! 👋
+                    </h2>
+                    <p class="text-sm sm:text-base text-gray-600 font-medium">
+                        Pobawimy się razem po angielsku? Kliknij mnie lub wybierz obrazek poniżej!
+                    </p>
+                </div>
+                <button onclick="pandaGreet()" class="btn-3d bg-sky-400 hover:bg-sky-500 text-white p-3 rounded-2xl text-xl sm:text-2xl shrink-0" title="Posłuchaj Pandy">
+                    🔊
+                </button>
+            `;
+            wrapper.appendChild(pandaBox);
+
+            const grid = document.createElement('div');
+            grid.className = 'grid grid-cols-2 sm:grid-cols-3 gap-4 sm:gap-6 w-full';
+
+            CATEGORIES.forEach(cat => {
+                const card = document.createElement('button');
+                card.onclick = () => selectCategory(cat.id);
+                card.className = `btn-3d ${cat.bgColor} border-b-8 ${cat.borderColor} rounded-3xl p-5 sm:p-8 flex flex-col items-center justify-center text-center group cursor-pointer`;
+                
+                card.innerHTML = `
+                    <div class="text-6xl sm:text-7xl mb-3 transform group-hover:scale-110 transition-transform duration-200">
+                        ${cat.icon}
+                    </div>
+                    <div class="text-2xl sm:text-3xl font-bold ${cat.textColor} mb-1">
+                        ${cat.namePL}
+                    </div>
+                    <div class="text-base sm:text-lg font-semibold bg-white/40 px-3 py-0.5 rounded-full ${cat.textColor}">
+                        ${cat.nameEN}
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+
+            wrapper.appendChild(grid);
+            container.appendChild(wrapper);
+        }
+
+        // Pasek przełączania trybu (Poznaj słówka vs Zgaduj!)
+        function createModeSwitcher() {
+            const switcher = document.createElement('div');
+            switcher.className = 'flex flex-wrap justify-center gap-2 sm:gap-4 mb-6 bg-white/80 p-2 rounded-3xl shadow-md border-2 border-white';
+
+            const learnActive = state.currentScreen === 'learn';
+            const quizActive = state.currentScreen === 'quiz';
+            const matchActive = state.currentScreen === 'match_colors';
+            const matchNumbersActive = state.currentScreen === 'match_numbers';
+            const isRhyme = state.selectedCategory && state.selectedCategory.id === 'color_rhyme';
+            const isColors = state.selectedCategory && state.selectedCategory.id === 'colors';
+            const isNumbers = state.selectedCategory && state.selectedCategory.id === 'numbers';
+
+            if (isRhyme) {
+                switcher.innerHTML = `
+                    <div class="px-5 py-2.5 sm:px-8 sm:py-3 rounded-2xl font-bold text-lg sm:text-xl flex items-center gap-2 bg-indigo-500 text-white">
+                        <span>🎶</span> Słuchaj rymowanki
+                    </div>
+                `;
+                return switcher;
+            }
+            
+            switcher.innerHTML = `
+                <button onclick="setMode('learn')" class="btn-3d px-4 py-2.5 sm:px-6 sm:py-3 rounded-2xl font-bold text-base sm:text-xl flex items-center gap-2 transition-colors ${learnActive ? 'bg-indigo-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}">
+                    <span>👀</span> Poznaj słówka
+                </button>
+                <button onclick="setMode('quiz')" class="btn-3d px-4 py-2.5 sm:px-6 sm:py-3 rounded-2xl font-bold text-base sm:text-xl flex items-center gap-2 transition-colors ${quizActive ? 'bg-green-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}">
+                    <span>🎮</span> Zgaduj i zbieraj ⭐
+                </button>
+                ${isColors ? `
+                    <button onclick="setMode('match_colors')" class="btn-3d px-4 py-2.5 sm:px-6 sm:py-3 rounded-2xl font-bold text-base sm:text-xl flex items-center gap-2 transition-colors ${matchActive ? 'bg-pink-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}">
+                        <span>🧩</span> Dopasuj kolor
+                    </button>
+                ` : ''}
+                ${isNumbers ? `
+                    <button onclick="setMode('match_numbers')" class="btn-3d px-4 py-2.5 sm:px-6 sm:py-3 rounded-2xl font-bold text-base sm:text-xl flex items-center gap-2 transition-colors ${matchNumbersActive ? 'bg-sky-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}">
+                        <span>🔢</span> Policz i dopasuj
+                    </button>
+                ` : ''}
+            `;
+            return switcher;
+        }
+
+        // 2. TRYB NAUKI (Klikanie i słuchanie)
+        function renderLearnMode(container) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'w-full flex flex-col items-center';
+
+            wrapper.appendChild(createModeSwitcher());
+
+            const grid = document.createElement('div');
+            // Dla pór roku i rymowanki (jedna całość) centrowany układ, dla reszty 2 na telefonie i 4 na tablecie/komputerze
+            const isRhymeWhole = state.selectedCategory.id === 'color_rhyme';
+            const colsClass = isRhymeWhole
+                ? 'grid-cols-1 max-w-2xl'
+                : (state.selectedCategory.id === 'seasons' ? 'grid-cols-2 max-w-2xl' : 'grid-cols-2 sm:grid-cols-4');
+            grid.className = `grid ${colsClass} gap-3 sm:gap-5 w-full`;
+
+            state.selectedCategory.items.forEach(item => {
+                const card = document.createElement('button');
+                card.className = 'btn-3d bg-white hover:bg-amber-50 border-4 border-indigo-100 rounded-3xl p-4 sm:p-6 flex flex-col items-center justify-between text-center cursor-pointer relative overflow-hidden';
+                
+                card.onclick = () => {
+                    playSoundEffect('click');
+                    // W rymowance nie tłumaczymy na język polski
+                    if (state.selectedCategory.id === 'color_rhyme') {
+                        speakEnglish(item.en, null);
+                    } else {
+                        speakEnglish(item.en, item.pl);
+                    }
+                    card.classList.add('animate-pop');
+                    setTimeout(() => card.classList.remove('animate-pop'), 500);
+                };
+
+                // Specjalny wygląd dla rymowanki jako jednej całości, kolorów i liczb
+                let visualContent = '';
+                if (state.selectedCategory.id === 'color_rhyme') {
+                    const linesHtml = (item.lines || [item.en])
+                        .map(line => `<div class="text-xl sm:text-2xl font-bold text-indigo-700 leading-relaxed">${line}</div>`)
+                        .join('');
+                    visualContent = `
+                        <div class="my-2 flex items-center justify-center gap-2 text-3xl sm:text-4xl">
+                            <span>🔴</span><span>🔵</span><span>🟢</span><span>🟡</span>
+                        </div>
+                        <div class="bg-fuchsia-50 border-2 border-fuchsia-200 rounded-2xl p-4 sm:p-5 my-2 w-full space-y-1">
+                            ${linesHtml}
+                        </div>
+                    `;
+                } else if (state.selectedCategory.id === 'colors') {
+                    visualContent = `
+                        <div class="relative my-2">
+                            <div class="color-swatch" style="background-color: ${item.colorHex};"></div>
+                            <span class="absolute -bottom-1 -right-2 text-3xl bg-white rounded-full p-1 shadow">${item.emoji}</span>
+                        </div>
+                    `;
+                } else if (state.selectedCategory.id === 'numbers') {
+                    visualContent = `
+                        <div class="text-5xl sm:text-6xl my-1">${item.emoji}</div>
+                        <div class="text-sm sm:text-base tracking-widest mb-1">${item.countEmoji}</div>
+                    `;
+                } else {
+                    visualContent = `
+                        <div class="text-6xl sm:text-7xl my-2">${item.emoji}</div>
+                    `;
+                }
+
+                const textBlock = state.selectedCategory.id === 'color_rhyme'
+                    ? `<div class="text-sm font-semibold text-fuchsia-600 mt-1">Kliknij, aby posłuchać całej rymowanki po angielsku 🎶</div>`
+                    : `
+                        <div class="mt-2 w-full">
+                            <div class="text-2xl sm:text-3xl font-bold text-indigo-600">${item.en}</div>
+                            <div class="text-sm sm:text-base font-medium text-gray-500">${item.pl}</div>
+                            ${item.desc ? `<div class="text-xs text-indigo-400 mt-1 font-semibold">${item.desc}</div>` : ''}
+                        </div>
+                    `;
+
+                card.innerHTML = `
+                    <div class="w-full flex justify-end">
+                        <span class="text-sky-400 text-lg">🔊</span>
+                    </div>
+                    ${visualContent}
+                    ${textBlock}
+                `;
+                grid.appendChild(card);
+            });
+
+            wrapper.appendChild(grid);
+            container.appendChild(wrapper);
+        }
+
+        // 3. TRYB ZABAWY / QUIZU ("Znajdź właściwy obrazek")
+        function nextQuizQuestion() {
+            state.isAnswering = false;
+            const items = state.selectedCategory.items;
+            
+            // Wylosuj poprawne słowo (inne niż poprzednie, jeśli to możliwe)
+            let target;
+            do {
+                target = items[Math.floor(Math.random() * items.length)];
+            } while (items.length > 1 && target === state.quizTarget);
+            
+            state.quizTarget = target;
+
+            // Wylosuj 2 lub 3 inne opcje (dla 4-latka 3 karty na ekranie są idealne - nie przytłaczają!)
+            const numOptions = Math.min(3, items.length);
+            const options = [target];
+            
+            while (options.length < numOptions) {
+                const randomItem = items[Math.floor(Math.random() * items.length)];
+                if (!options.includes(randomItem)) {
+                    options.push(randomItem);
+                }
+            }
+
+            // Pomieszaj kolejność kart
+            state.quizOptions = options.sort(() => Math.random() - 0.5);
+
+            render();
+            
+            // Wypowiedz pytanie po krótkiej chwili
+            setTimeout(() => {
+                speakEnglish(state.quizTarget.en);
+            }, 300);
+        }
+
+        function renderQuizMode(container) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'w-full flex flex-col items-center';
+
+            wrapper.appendChild(createModeSwitcher());
+
+            // Panel z pytaniem i dużym głośnikiem do powtarzania słowa
+            const promptBox = document.createElement('div');
+            promptBox.className = 'bg-white border-4 border-green-400 rounded-3xl p-4 sm:p-6 mb-6 sm:mb-8 shadow-lg flex flex-col sm:flex-row items-center gap-4 text-center max-w-xl w-full justify-center';
+            
+            promptBox.innerHTML = `
+                <button onclick="speakEnglish('${state.quizTarget.en}')" class="btn-3d bg-sky-400 hover:bg-sky-500 text-white w-16 h-16 sm:w-20 sm:h-20 rounded-full flex items-center justify-center text-3xl sm:text-4xl shrink-0 animate-bounce-gentle" title="Posłuchaj jeszcze raz">
+                    🔊
+                </button>
+                <div>
+                    <div class="text-gray-500 font-semibold text-base sm:text-lg">Gdzie jest...</div>
+                    <div class="text-4xl sm:text-5xl font-bold text-indigo-600 tracking-wide">${state.quizTarget.en}?</div>
+                </div>
+            `;
+            wrapper.appendChild(promptBox);
+
+            // Karty z odpowiedziami (3 duże przyciski)
+            const optionsGrid = document.createElement('div');
+            optionsGrid.className = 'grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 w-full max-w-3xl';
+
+            state.quizOptions.forEach(option => {
+                const btn = document.createElement('button');
+                btn.className = 'btn-3d bg-white hover:bg-yellow-50 border-4 border-indigo-200 rounded-3xl p-6 sm:p-8 flex flex-row sm:flex-col items-center justify-center gap-4 cursor-pointer transition-all';
+                
+                let visual = '';
+                if (state.selectedCategory.id === 'colors') {
+                    visual = `<div class="color-swatch" style="background-color: ${option.colorHex};"></div>`;
+                } else if (state.selectedCategory.id === 'numbers') {
+                    visual = `
+                        <div class="text-6xl sm:text-7xl">${option.emoji}</div>
+                        <div class="text-lg tracking-widest">${option.countEmoji}</div>
+                    `;
+                } else {
+                    visual = `<div class="text-7xl sm:text-8xl">${option.emoji}</div>`;
+                }
+
+                btn.innerHTML = `
+                    ${visual}
+                    <div class="text-xl font-bold text-gray-400 sm:hidden">${option.pl}</div>
+                `;
+                if (state.selectedCategory.id === 'color_rhyme') {
+                    btn.innerHTML = `
+                        ${visual}
+                        <div class="text-base font-bold text-indigo-700">${option.en}</div>
+                    `;
+                }
+
+                btn.onclick = () => handleQuizAnswer(option, btn);
+                optionsGrid.appendChild(btn);
+            });
+
+            wrapper.appendChild(optionsGrid);
+            container.appendChild(wrapper);
+        }
+
+        // Sprawdzanie odpowiedzi dziecka
+        function handleQuizAnswer(selectedOption, cardElement) {
+            if (state.isAnswering) return;
+
+            if (selectedOption.en === state.quizTarget.en) {
+                // POPRAWNA ODPOWIEDŹ!
+                state.isAnswering = true;
+                playSoundEffect('success');
+                speakEnglish(`Great! ${selectedOption.en}!`);
+                
+                cardElement.classList.remove('border-indigo-200', 'bg-white');
+                cardElement.classList.add('border-green-500', 'bg-green-100', 'animate-pop');
+                
+                // Dodaj napis z nazwą po sukcesie
+                const label = document.createElement('div');
+                label.className = 'text-2xl font-bold text-green-700 mt-2';
+                label.textContent = selectedOption.pl ? `${selectedOption.en} (${selectedOption.pl})! 🎉` : `${selectedOption.en}! 🎉`;
+                cardElement.appendChild(label);
+
+                addStar();
+
+                // Przejdź do kolejnego pytania (jeśli nie otworzył się modal z nagrodą)
+                if (state.quizStreak % 5 !== 0) {
+                    setTimeout(() => {
+                        nextQuizQuestion();
+                    }, 1600);
+                }
+            } else {
+                // BŁĘDNA ODPOWIEDŹ (Delikatna informacja zwrotna)
+                playSoundEffect('tryAgain');
+                speakEnglish(`No, that's ${selectedOption.en}. Try again!`);
+                
+                cardElement.classList.remove('border-indigo-200');
+                cardElement.classList.add('border-rose-300', 'bg-rose-50', 'animate-wobble', 'opacity-60');
+                
+                setTimeout(() => {
+                    cardElement.classList.remove('animate-wobble');
+                }, 400);
+            }
+        }
+
+        // 4. GRA DOPASOWYWANIA KOLORÓW Z ANGIELSKĄ NAZWĄ DO OBRAZKA
+        let colorMatchObjects = [];
+        let colorMatchTargets = [];
+
+        function initColorMatchGame() {
+            const colorsCat = CATEGORIES.find(c => c.id === 'colors');
+            // Wybierz 4 losowe kolory do rundy, aby plansza była przejrzysta dla 4-latka
+            const shuffled = [...colorsCat.items].sort(() => Math.random() - 0.5);
+            const roundColors = shuffled.slice(0, 4);
+
+            colorMatchTargets = [...roundColors].sort(() => Math.random() - 0.5);
+            colorMatchObjects = [...roundColors].sort(() => Math.random() - 0.5);
+            state.matchSelectedColor = null;
+            state.matchMatchedIds = [];
+            render();
+        }
+
+        function renderColorMatchMode(container) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'w-full flex flex-col items-center';
+
+            wrapper.appendChild(createModeSwitcher());
+
+            const instruction = document.createElement('div');
+            instruction.className = 'bg-white/95 border-4 border-pink-300 rounded-3xl px-5 py-3 mb-5 text-center shadow max-w-2xl w-full';
+            instruction.innerHTML = `
+                <div class="text-lg sm:text-2xl font-bold text-indigo-700">
+                    Kliknij kolor po angielsku, a potem pasujący obrazek! 🎨➡️🍎
+                </div>
+                <div class="text-xs sm:text-sm text-gray-500 mt-0.5">
+                    Dopasowano w tej rundzie: <span class="font-bold text-pink-600">${state.matchMatchedIds.length} / ${colorMatchTargets.length}</span>
+                </div>
+            `;
+            wrapper.appendChild(instruction);
+
+            const board = document.createElement('div');
+            board.className = 'grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-8 w-full max-w-3xl';
+
+            // Lewa kolumna: Kolory z angielską nazwą
+            const leftCol = document.createElement('div');
+            leftCol.className = 'bg-white/80 border-4 border-white rounded-3xl p-4 flex flex-col gap-3 shadow-md';
+            leftCol.innerHTML = `<div class="text-center font-bold text-indigo-600 text-lg mb-1">1. Wybierz kolor (English)</div>`;
+
+            colorMatchTargets.forEach(item => {
+                const isMatched = state.matchMatchedIds.includes(item.en);
+                const isSelected = state.matchSelectedColor && state.matchSelectedColor.en === item.en;
+
+                const btn = document.createElement('button');
+                btn.disabled = isMatched;
+                btn.className = `btn-3d w-full rounded-2xl p-3 sm:p-4 flex items-center justify-between gap-3 border-4 transition-all ${
+                    isMatched
+                        ? 'bg-green-100 border-green-400 opacity-70 cursor-default'
+                        : isSelected
+                            ? 'bg-amber-100 border-amber-500 ring-4 ring-amber-300 scale-[1.02]'
+                            : 'bg-white hover:bg-pink-50 border-indigo-100 cursor-pointer'
+                }`;
+
+                btn.onclick = () => {
+                    if (isMatched) return;
+                    playSoundEffect('click');
+                    state.matchSelectedColor = item;
+                    speakEnglish(item.en);
+                    render();
+                };
+
+                btn.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <span class="w-10 h-10 sm:w-12 sm:h-12 rounded-full border-4 border-white shadow shrink-0" style="background-color: ${item.colorHex};"></span>
+                        <span class="text-2xl sm:text-3xl font-bold text-indigo-700">${item.en}</span>
+                    </div>
+                    <span class="text-2xl">${isMatched ? '✅' : (isSelected ? '👉' : '🔊')}</span>
+                `;
+                leftCol.appendChild(btn);
+            });
+
+            // Prawa kolumna: Przedmioty / owoce / zwierzątka o danym kolorze
+            const rightCol = document.createElement('div');
+            rightCol.className = 'bg-white/80 border-4 border-white rounded-3xl p-4 flex flex-col gap-3 shadow-md';
+            rightCol.innerHTML = `<div class="text-center font-bold text-indigo-600 text-lg mb-1">2. Dopasuj obrazek</div>`;
+
+            colorMatchObjects.forEach(item => {
+                const isMatched = state.matchMatchedIds.includes(item.en);
+
+                const objBtn = document.createElement('button');
+                objBtn.disabled = isMatched;
+                objBtn.className = `btn-3d w-full rounded-2xl p-3 sm:p-4 flex items-center justify-between gap-3 border-4 transition-all ${
+                    isMatched
+                        ? 'bg-green-100 border-green-400 opacity-75 cursor-default'
+                        : 'bg-white hover:bg-yellow-50 border-indigo-100 cursor-pointer'
+                }`;
+
+                objBtn.onclick = () => handleColorObjectClick(item, objBtn);
+
+                objBtn.innerHTML = `
+                    <div class="flex items-center gap-4">
+                        <span class="text-4xl sm:text-5xl">${item.emoji}</span>
+                        <div class="text-left">
+                            <div class="text-lg sm:text-xl font-bold text-gray-700">${isMatched ? item.en : '???'}</div>
+                            <div class="text-xs sm:text-sm text-gray-400">${isMatched ? item.pl : 'Dotknij, aby dopasować'}</div>
+                        </div>
+                    </div>
+                    <span class="text-2xl">${isMatched ? '⭐' : '❓'}</span>
+                `;
+                rightCol.appendChild(objBtn);
+            });
+
+            board.appendChild(leftCol);
+            board.appendChild(rightCol);
+            wrapper.appendChild(board);
+
+            // Przycisk nowej rundy
+            const newRoundBtn = document.createElement('button');
+            newRoundBtn.onclick = () => {
+                playSoundEffect('click');
+                initColorMatchGame();
+            };
+            newRoundBtn.className = 'btn-3d mt-6 bg-amber-400 hover:bg-amber-500 text-amber-950 font-bold text-lg px-6 py-3 rounded-2xl';
+            newRoundBtn.textContent = '🔄 Nowe kolory';
+            wrapper.appendChild(newRoundBtn);
+
+            container.appendChild(wrapper);
+        }
+
+        function handleColorObjectClick(objItem, cardEl) {
+            if (!state.matchSelectedColor) {
+                playSoundEffect('tryAgain');
+                speakEnglish("First pick a color word!");
+                cardEl.classList.add('animate-wobble');
+                setTimeout(() => cardEl.classList.remove('animate-wobble'), 400);
+                return;
+            }
+
+            if (state.matchSelectedColor.en === objItem.en) {
+                // Trafione dopasowanie!
+                playSoundEffect('success');
+                speakEnglish(`${objItem.en}! Good job!`);
+                state.matchMatchedIds.push(objItem.en);
+                state.matchSelectedColor = null;
+                addStar();
+
+                if (state.matchMatchedIds.length === colorMatchTargets.length) {
+                    setTimeout(() => {
+                        initColorMatchGame();
+                    }, 1300);
+                } else {
+                    render();
+                }
+            } else {
+                // Nie ten kolor
+                playSoundEffect('tryAgain');
+                speakEnglish(`Try again! Find ${state.matchSelectedColor.en}!`);
+                cardEl.classList.add('animate-wobble', 'bg-rose-50', 'border-rose-300');
+                setTimeout(() => {
+                    cardEl.classList.remove('animate-wobble', 'bg-rose-50', 'border-rose-300');
+                }, 450);
+            }
+        }
+
+        // Powitanie głosowe asystenta Pandy
+        let pandaHasGreeted = false;
+        function pandaGreet() {
+            playSoundEffect('click');
+            speakEnglish("Hello! I am Panda! Let's play and learn English!", "Cześć! Jestem Panda! Pobawmy się razem po angielsku!");
+        }
+
+        // 5. GRA DOPASOWUJĄCA LICZBĘ PO ANGIELSKU DO ILOŚCI PRZEDMIOTÓW NA OBRAZKU
+        let numberMatchTargets = [];
+        let numberMatchObjects = [];
+
+        function initNumberMatchGame() {
+            const numbersCat = CATEGORIES.find(c => c.id === 'numbers');
+            // Wybierz 4 losowe liczby do rundy, aby plansza była czytelna dla czterolatka
+            const shuffled = [...numbersCat.items].sort(() => Math.random() - 0.5);
+            const roundNumbers = shuffled.slice(0, 4);
+
+            numberMatchTargets = [...roundNumbers].sort(() => Math.random() - 0.5);
+            numberMatchObjects = [...roundNumbers].sort(() => Math.random() - 0.5);
+            state.matchSelectedNumber = null;
+            state.matchMatchedNumbers = [];
+            render();
+        }
+
+        function renderNumberMatchMode(container) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'w-full flex flex-col items-center';
+
+            wrapper.appendChild(createModeSwitcher());
+
+            const instruction = document.createElement('div');
+            instruction.className = 'bg-white/95 border-4 border-sky-300 rounded-3xl px-5 py-3 mb-5 text-center shadow max-w-2xl w-full';
+            instruction.innerHTML = `
+                <div class="text-lg sm:text-2xl font-bold text-indigo-700">
+                    Kliknij liczbę po angielsku, a potem obrazek z tyloma przedmiotami! 🔢➡️🎈
+                </div>
+                <div class="text-xs sm:text-sm text-gray-500 mt-0.5">
+                    Dopasowano w tej rundzie: <span class="font-bold text-sky-600">${state.matchMatchedNumbers.length} / ${numberMatchTargets.length}</span>
+                </div>
+            `;
+            wrapper.appendChild(instruction);
+
+            const board = document.createElement('div');
+            board.className = 'grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-8 w-full max-w-3xl';
+
+            // Lewa kolumna: Liczba z nazwą po angielsku
+            const leftCol = document.createElement('div');
+            leftCol.className = 'bg-white/80 border-4 border-white rounded-3xl p-4 flex flex-col gap-3 shadow-md';
+            leftCol.innerHTML = `<div class="text-center font-bold text-indigo-600 text-lg mb-1">1. Wybierz liczbę (English)</div>`;
+
+            numberMatchTargets.forEach(item => {
+                const isMatched = state.matchMatchedNumbers.includes(item.en);
+                const isSelected = state.matchSelectedNumber && state.matchSelectedNumber.en === item.en;
+
+                const btn = document.createElement('button');
+                btn.disabled = isMatched;
+                btn.className = `btn-3d w-full rounded-2xl p-3 sm:p-4 flex items-center justify-between gap-3 border-4 transition-all ${
+                    isMatched
+                        ? 'bg-green-100 border-green-400 opacity-70 cursor-default'
+                        : isSelected
+                            ? 'bg-amber-100 border-amber-500 ring-4 ring-amber-300 scale-[1.02]'
+                            : 'bg-white hover:bg-sky-50 border-indigo-100 cursor-pointer'
+                }`;
+
+                btn.onclick = () => {
+                    if (isMatched) return;
+                    playSoundEffect('click');
+                    state.matchSelectedNumber = item;
+                    speakEnglish(item.en);
+                    render();
+                };
+
+                btn.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <span class="text-3xl sm:text-4xl">${item.emoji}</span>
+                        <span class="text-2xl sm:text-3xl font-bold text-indigo-700">${item.en}</span>
+                    </div>
+                    <span class="text-2xl">${isMatched ? '✅' : (isSelected ? '👉' : '🔊')}</span>
+                `;
+                leftCol.appendChild(btn);
+            });
+
+            // Prawa kolumna: Obrazki z liczbą przedmiotów do przeliczenia
+            const rightCol = document.createElement('div');
+            rightCol.className = 'bg-white/80 border-4 border-white rounded-3xl p-4 flex flex-col gap-3 shadow-md';
+            rightCol.innerHTML = `<div class="text-center font-bold text-indigo-600 text-lg mb-1">2. Policz i dopasuj obrazek</div>`;
+
+            numberMatchObjects.forEach(item => {
+                const isMatched = state.matchMatchedNumbers.includes(item.en);
+
+                const objBtn = document.createElement('button');
+                objBtn.disabled = isMatched;
+                objBtn.className = `btn-3d w-full rounded-2xl p-3 sm:p-4 flex items-center justify-between gap-3 border-4 transition-all ${
+                    isMatched
+                        ? 'bg-green-100 border-green-400 opacity-75 cursor-default'
+                        : 'bg-white hover:bg-yellow-50 border-indigo-100 cursor-pointer'
+                }`;
+
+                objBtn.onclick = () => handleNumberObjectClick(item, objBtn);
+
+                objBtn.innerHTML = `
+                    <div class="flex flex-col items-start gap-1 text-left">
+                        <div class="text-xl sm:text-2xl tracking-wider leading-snug">${item.countEmoji}</div>
+                        <div class="text-xs sm:text-sm font-semibold text-gray-500">
+                            ${isMatched ? `${item.en} (${item.pl})` : 'Policz przedmioty i kliknij'}
+                        </div>
+                    </div>
+                    <span class="text-2xl shrink-0">${isMatched ? '⭐' : '❓'}</span>
+                `;
+                rightCol.appendChild(objBtn);
+            });
+
+            board.appendChild(leftCol);
+            board.appendChild(rightCol);
+            wrapper.appendChild(board);
+
+            // Przycisk nowej rundy
+            const newRoundBtn = document.createElement('button');
+            newRoundBtn.onclick = () => {
+                playSoundEffect('click');
+                initNumberMatchGame();
+            };
+            newRoundBtn.className = 'btn-3d mt-6 bg-amber-400 hover:bg-amber-500 text-amber-950 font-bold text-lg px-6 py-3 rounded-2xl';
+            newRoundBtn.textContent = '🔄 Nowe liczby';
+            wrapper.appendChild(newRoundBtn);
+
+            container.appendChild(wrapper);
+        }
+
+        function handleNumberObjectClick(objItem, cardEl) {
+            if (!state.matchSelectedNumber) {
+                playSoundEffect('tryAgain');
+                speakEnglish("First pick a number word!");
+                cardEl.classList.add('animate-wobble');
+                setTimeout(() => cardEl.classList.remove('animate-wobble'), 400);
+                return;
+            }
+
+            if (state.matchSelectedNumber.en === objItem.en) {
+                // Poprawne dopasowanie liczby do ilości przedmiotów
+                playSoundEffect('success');
+                speakEnglish(`${objItem.en}! Good job!`);
+                state.matchMatchedNumbers.push(objItem.en);
+                state.matchSelectedNumber = null;
+                addStar();
+
+                if (state.matchMatchedNumbers.length === numberMatchTargets.length) {
+                    setTimeout(() => {
+                        initNumberMatchGame();
+                    }, 1300);
+                } else {
+                    render();
+                }
+            } else {
+                // Zła liczba przedmiotów
+                playSoundEffect('tryAgain');
+                speakEnglish(`Try again! Find ${state.matchSelectedNumber.en}!`);
+                cardEl.classList.add('animate-wobble', 'bg-rose-50', 'border-rose-300');
+                setTimeout(() => {
+                    cardEl.classList.remove('animate-wobble', 'bg-rose-50', 'border-rose-300');
+                }, 450);
+            }
+        }
+
+        // Start aplikacji po załadowaniu strony
+        window.onload = () => {
+            updateHeader();
+            render();
+
+            // Automatyczne powitanie przy pierwszym wejściu lub pierwszym dotknięciu ekranu (wymóg przeglądarek dla dźwięku)
+            const autoGreetOnce = () => {
+                if (!pandaHasGreeted) {
+                    pandaHasGreeted = true;
+                    pandaGreet();
+                }
+                document.removeEventListener('click', autoGreetOnce);
+                document.removeEventListener('touchstart', autoGreetOnce);
+            };
+
+            // Spróbuj od razu przywitać głosowo
+            setTimeout(() => {
+                if (!pandaHasGreeted && 'speechSynthesis' in window) {
+                    pandaHasGreeted = true;
+                    speakEnglish("Hello! I am Panda! Let's play!", "Cześć! Jestem Panda!");
+                }
+            }, 500);
+
+            document.addEventListener('click', autoGreetOnce, { once: true });
+            document.addEventListener('touchstart', autoGreetOnce, { once: true });
+        };
+    </script>
+</body>
+</html>
